@@ -13,10 +13,16 @@ let g:loaded_eleline = 1
 let s:save_cpo = &cpoptions
 set cpoptions&vim
 
-let s:font = get(g:, 'eleline_powerline_fonts', get(g:, 'airline_powerline_fonts', 0))
-let s:f_icon = s:font ? get(g:, 'eleline_function_icon', " \u0192 ") : ''
 let s:gui = has('gui_running')
 let s:jobs = {}
+
+" Icons/symbols
+let s:font = get(g:, 'eleline_powerline_fonts', get(g:, 'airline_powerline_fonts', 0))
+let s:fn_icon = s:font ? get(g:, 'eleline_function_icon', 'ƒ') : ''
+let s:ln_icon = s:font ? get(g:, 'eleline_linenr_icon', '') : ''
+let s:ro_icon = s:font ? get(g:, 'eleline_readonly_icon', '') : ''
+let s:lines_icon = s:font ? get(g:, 'eleline_lines_icon', '☰') : ''
+let s:modified_icon = get(g:, 'eleline_modified_icon', '[+]')
 
 function! ElelineBufnrWinnr() abort
     let l:bufnr = bufnr('%')
@@ -37,8 +43,8 @@ function! ElelinePaste() abort
     return &paste ? 'PASTE ' : ''
 endfunction
 
-function! ElelineFsize(f) abort
-    let l:size = getfsize(expand(a:f))
+function! ElelineFsize() abort
+    let l:size = getfsize(expand(@%))
     if l:size == 0 || l:size == -1 || l:size == -2
         return ''
     endif
@@ -105,17 +111,38 @@ function! ElelineColNo() abort
     return printf('%3d', virtcol('.'))
 endfunction
 
-function! ElelineFileEnc() abort
-    return &fileencoding !=? 'utf-8' ? &fileencoding : ''
+function! ElelineLinePct() abort
+    return printf(' %3d%% ', line('.') * 100 / line('$'))
+endfunction
+
+function! ElelineLinePos() abort
+    return printf(' %s%s  %s %s :%s ',
+        \ ElelineLinePct(),
+        \ s:lines_icon,
+        \ ElelineLineNo(),
+        \ s:ln_icon,
+        \ ElelineColNo()
+        \ )
+endfunction
+
+function! ElelineFileFmtEnc() abort
+    if &fileencoding !=# 'utf-8' || &fileformat !=# 'unix'
+        return printf('  %s[%s] ', ElelineFileFmt(), ElelineFileEnc())
+    endif
+    return ''
 endfunction
 
 function! ElelineFileInfo() abort
-    " TODO: is there a way to avoid trimming without adding brackets?
-    let out = ' '
-    if &filetype !=# '' | let out .= ' '.&filetype.' ' | endif
-    if &modified        | let out .= '+'               | endif
-    if &readonly        | let out .= ''               | endif
-    return out.' '
+    let l:symbol = ''
+    if &modified
+        let l:symbol = '[+]'
+    elseif &readonly
+        let l:symbol = s:ro_icon
+    endif
+    return printf(' %s %s ',
+        \ l:symbol,
+        \ &filetype,
+        \ )
 endfunction
 
 function! s:is_tmp_file() abort
@@ -221,7 +248,8 @@ function! ElelineLCN() abort
 endfunction
 
 function! ElelineVista() abort
-    return !empty(get(b:, 'vista_nearest_method_or_function', '')) ? s:f_icon.b:vista_nearest_method_or_function : ''
+    return !empty(get(b:, 'vista_nearest_method_or_function', '')) ?
+        \ printf(' %s %s ', s:fn_icon, b:vista_nearest_method_or_function) : ''
 endfunction
 
 function! ElelineCoc() abort
@@ -245,7 +273,7 @@ function! ElelineMode() abort
         \ '\<C-s>': ['S-BLOCK','S-BL','S-B'],
         \ 't':      ['TERMINAL','TERM','T'],
         \ }
-    return l:mode_map[mode()][1]
+    return printf('  %s ', l:mode_map[mode()][0])
 endfunction
 
 " https://github.com/liuchengxu/eleline.vim/wiki
@@ -264,32 +292,31 @@ function! s:StatusLine() abort
     let l:tags = '%{exists("b:gutentags_files") ? gutentags#statusline() : ""} '
     let l:lcn = '%{ElelineLCN()}'
     let l:coc = '%{ElelineCoc()}'
-    let l:vista = '%#ElelineVista#%{ElelineVista()}%*'
+    let l:vista = s:def('ElelineVista')
     let l:line_pos = '%{ElelineLineNo()}'
     let l:col_no = '%{ElelineColNo()}'
-    let l:prefix = l:bufnr_winnr.l:paste
+    let l:prefix = l:mode.l:paste
     let l:common = l:curfname.l:branch.l:status.l:error.l:warning.l:tags.l:lcn.l:coc.l:vista
     if get(g:, 'eleline_slim', 0)
         return l:prefix.'%<'.l:common
     endif
     let l:tot = s:def('ElelineTotalBuf')
-    let l:fsize = '%#ElelineFsize#%{ElelineFsize(@%)}%*'
-    " let l:m_r_f = '%#Eleline7# %m%r%y %*'
-    let l:m_r_f = '%#Eleline7#%{ElelineFileInfo()}%*'
-    let l:pos = '%#Eleline8# '.(s:font?"\ue0a1 ":'').l:line_pos.':'.l:col_no.' |'
-    let l:enc = ' %{ElelineFileEnc() !=# "" ? ElelineFileEnc()." | " : ""}'
-    let l:ff = '%{&ff} %*'
-    let l:pct = '%#Eleline9# %P %*'
+    let l:fsize = s:def('ElelineFsize')
+    let l:m_r_f = s:def('ElelineFileInfo')
+    let l:pos = s:def('ElelineLinePos')
+    let l:enc = s:def('ElelineFileEnc')
+    let l:ff_enc = s:def('ElelineFileFmtEnc')
     return l:prefix.'%<'.l:fsize.l:common
-        \ .'%='.l:m_r_f.l:pos.l:enc.l:ff.l:pct.' '
+        \ .'%='.l:m_r_f.l:ff_enc.l:pos
 endfunction
 
+" Hex colors (gui only)
 let s:colors = {
     \   140 : '#af87d7', 149 : '#99cc66', 160 : '#d70000',
     \   171 : '#d75fd7', 178 : '#ffbb7d', 184 : '#ffe920',
     \   208 : '#ff8700', 232 : '#333300', 197 : '#cc0033',
     \   214 : '#ffff66', 124 : '#af3a03', 172 : '#b57614',
-    \   32  : '#3a81c3', 89  : '#6c3163',
+    \   32  : '#3a81c3', 89  : '#6c3163', 186 : '#d7d787',
     \
     \   235 : '#262626', 236 : '#303030', 237 : '#3a3a3a',
     \   238 : '#444444', 239 : '#4e4e4e', 240 : '#585858',
@@ -343,37 +370,35 @@ function! s:hi(group, dark, light, ...) abort
 endfunction
 
 function! s:hi_statusline() abort
-    call s:hi('ElelineBufnrWinnr',  [232 , 178],    [89, ''])
-    call s:hi('ElelineMode',        [232 , 178],    [89, ''])
-    call s:hi('ElelineTotalBuf',    [178 , s:bg+8], [240, ''])
-    call s:hi('ElelinePaste',       [232 , 178],    [232, 178], 'bold')
-    call s:hi('ElelineFsize',       [250 , s:bg+6], [235, ''])
-    call s:hi('ElelineCurFname',    [171 , s:bg+4], [171, ''],  'bold')
-    call s:hi('ElelineGitBranch',   [184 , s:bg+2], [89, ''],   'bold')
-    call s:hi('ElelineGitStatus',   [208 , s:bg+2], [89, ''])
-    call s:hi('ElelineError',       [197 , s:bg+2], [197, ''])
-    call s:hi('ElelineWarning',     [214 , s:bg+2], [214, ''])
-    call s:hi('ElelineVista',       [149 , s:bg+2], [149, ''])
+    call s:hi('ElelineBufnrWinnr',  [232, 178],     [89, ''])
+    call s:hi('ElelineMode',        [232, 178],     [89, ''])
+    call s:hi('ElelineTotalBuf',    [178, s:bg+8],  [240, ''])
+    call s:hi('ElelinePaste',       [232, 178],     [232, 178], 'bold')
+    call s:hi('ElelineFsize',       [250, s:bg+6],  [235, ''])
+    call s:hi('ElelineCurFname',    [171, s:bg+4],  [171, ''],  'bold')
+    call s:hi('ElelineGitBranch',   [184, s:bg+2],  [89, ''],   'bold')
+    call s:hi('ElelineGitStatus',   [208, s:bg+2],  [89, ''])
+    call s:hi('ElelineError',       [197, s:bg+2],  [197, ''])
+    call s:hi('ElelineWarning',     [214, s:bg+2],  [214, ''])
+    call s:hi('ElelineVista',       [149, s:bg+2],  [149, ''])
 
     if &background ==# 'dark'
-        call s:hi('StatusLine',     [140 , s:bg+2], [140, ''], 'none')
+        call s:hi('StatusLine',     [140, s:bg+2],  [140, ''], 'none')
     endif
 
-    call s:hi('Eleline7',           [249 , s:bg+3], [237, ''])
-    call s:hi('Eleline8',           [250 , s:bg+4], [238, ''])
-    call s:hi('Eleline9',           [251 , s:bg+5], [239, ''])
+    " Right side
+    call s:hi('ElelineFileInfo',    [140, s:bg+2],  [237, ''])
+    call s:hi('ElelineFileFmtEnc',  [250, s:bg+3],  [238, ''])
+    call s:hi('ElelineLinePos',     [252, s:bg+5],  [240, ''])
 endfunction
 
 function! s:InsertStatuslineColor(mode) abort
     if a:mode ==? 'i'
-        call s:hi('ElelineBufnrWinnr',  [251, s:bg+8],  [251, s:bg+8])
-        call s:hi('ElelineMode',        [251, s:bg+8],  [251, s:bg+8])
+        call s:hi('ElelineMode',    [251, s:bg+8],  [251, s:bg+8])
     elseif a:mode ==? 'r'
-        call s:hi('ElelineBufnrWinnr',  [232, 160],     [232, 160])
-        call s:hi('ElelineMode',        [232, 160],     [232, 160])
+        call s:hi('ElelineMode',    [232, 160],     [232, 160])
     else
-        call s:hi('ElelineBufnrWinnr',  [232, 178],     [89, ''])
-        call s:hi('ElelineMode',        [232, 178],     [89, ''])
+        call s:hi('ElelineMode',    [232, 178],     [89, ''])
     endif
 endfunction
 
@@ -383,7 +408,7 @@ endfunction
 function! s:SetStatusLine(...) abort
     call ElelineGitBranch(1)
     let &l:statusline = s:StatusLine()
-    " User-defined highlightings shoule be put after colorscheme command.
+    " User-defined highlightings should be put after colorscheme command.
     call s:hi_statusline()
 endfunction
 
@@ -397,7 +422,7 @@ augroup eleline
     autocmd!
     autocmd User GitGutter,Startified,LanguageClientStarted call s:SetStatusLine()
     " Change colors for insert mode
-    autocmd InsertLeave * call s:hi('ElelineBufnrWinnr', [232, 178], [89, ''])
+    autocmd InsertLeave * call s:hi('ElelineMode', [232, 178], [89, ''])
     autocmd InsertEnter,InsertChange * call s:InsertStatuslineColor(v:insertmode)
     autocmd BufWinEnter,ShellCmdPost,BufWritePost * call s:SetStatusLine()
     autocmd FileChangedShellPost,ColorScheme * call s:SetStatusLine()
