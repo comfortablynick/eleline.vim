@@ -127,7 +127,12 @@ endfunction
 
 function! ElelineFileFmtEnc() abort
     if &fileencoding !=# 'utf-8' || &fileformat !=# 'unix'
-        return printf('  %s[%s] ', ElelineFileFmt(), ElelineFileEnc())
+        let l:fe = &fileencoding !=# '' ?
+            \ printf('[%s]', &fileencoding) : ''
+        return printf('  %s%s ',
+            \ &fileformat,
+            \ l:fe,
+            \ )
     endif
     return ''
 endfunction
@@ -266,11 +271,11 @@ function! ElelineMode() abort
         \ 'R' :     ['REPLACE','REPL','R'],
         \ 'v' :     ['VISUAL','VIS','V'],
         \ 'V' :     ['V-LINE','V-LN','V-L'],
-        \ '\<C-v>': ['V-BLOCK','V-BL','V-B'],
+        \ "\<C-v>": ['V-BLOCK','V-BL','V-B'],
         \ 'c' :     ['COMMAND','CMD','C'],
         \ 's' :     ['SELECT','SEL','S'],
         \ 'S' :     ['S-LINE','S-LN','S-L'],
-        \ '\<C-s>': ['S-BLOCK','S-BL','S-B'],
+        \ "\<C-s>": ['S-BLOCK','S-BL','S-B'],
         \ 't':      ['TERMINAL','TERM','T'],
         \ }
     return printf('  %s ', l:mode_map[mode()][0])
