@@ -156,6 +156,27 @@ function! s:is_tmp_file() abort
     if expand('%:p') =~# '^/tmp' | return 1 | endif
 endfunction
 
+
+function! s:is_not_file() abort
+    " Return true if not treated as file
+    let exclude = [
+        \ 'gitcommit',
+        \ 'NERD_tree',
+        \ 'output',
+        \ 'vista',
+        \ 'undotree',
+        \ 'startify',
+        \ ]
+    for item in exclude
+        if &filetype =~? item || expand('%:t') =~ item
+            return 1
+            break
+        else
+            continue
+        endif
+    endfor
+endfunction
+
 " Reference: https://github.com/chemzqm/vimrc/blob/master/statusline.vim
 function! ElelineGitBranch(...) abort
     if s:is_tmp_file() | return '' | endif
@@ -315,6 +336,15 @@ function! s:StatusLine() abort
         \ .'%='.l:m_r_f.l:ff_enc.l:pos
 endfunction
 
+function! s:SetStatusLineDef() abort
+    " Set default status line for inactive windows, etc
+    if s:is_not_file()
+        setlocal statusline=
+        return
+    endif
+    setlocal statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P
+endfunction
+
 " Hex colors (gui only)
 let s:colors = {
     \   140 : '#af87d7', 149 : '#99cc66', 160 : '#d70000',
@@ -323,6 +353,7 @@ let s:colors = {
     \   214 : '#ffff66', 124 : '#af3a03', 172 : '#b57614',
     \   32  : '#3a81c3', 89  : '#6c3163', 186 : '#d7d787',
     \
+    \   231 : '#ffffff', 233 : '#121212', 234 : '#1c1c1c',
     \   235 : '#262626', 236 : '#303030', 237 : '#3a3a3a',
     \   238 : '#444444', 239 : '#4e4e4e', 240 : '#585858',
     \   241 : '#606060', 242 : '#666666', 243 : '#767676',
@@ -389,6 +420,7 @@ function! s:hi_statusline() abort
 
     if &background ==# 'dark'
         call s:hi('StatusLine',     [140, s:bg+2],  [140, ''], 'none')
+        call s:hi('StatusLineNC',   [140, s:bg],  [140, ''], 'none')
     endif
 
     " Right side
@@ -410,7 +442,12 @@ endfunction
 " Note that the "%!" expression is evaluated in the context of the
 " current window and buffer, while %{} items are evaluated in the
 " context of the window that the statusline belongs to.
+" TODO: find better way to hide inactive statusline rather than resetting
 function! s:SetStatusLine(...) abort
+    if s:is_not_file()
+        call s:SetStatusLineDef()
+        return
+    endif
     call ElelineGitBranch(1)
     let &l:statusline = s:StatusLine()
     " User-defined highlightings should be put after colorscheme command.
@@ -418,7 +455,7 @@ function! s:SetStatusLine(...) abort
 endfunction
 
 if exists('*timer_start')
-    call timer_start(100, function('s:SetStatusLine'))
+    call timer_start(1000, function('s:SetStatusLine'))
 else
     call s:SetStatusLine()
 endif
@@ -429,9 +466,11 @@ augroup eleline
     " Change colors for insert mode
     autocmd InsertLeave * call s:hi('ElelineMode', [232, 178], [89, ''])
     autocmd InsertEnter,InsertChange * call s:InsertStatuslineColor(v:insertmode)
-    autocmd BufWinEnter,ShellCmdPost,BufWritePost * call s:SetStatusLine()
+    autocmd WinEnter,BufWinEnter,ShellCmdPost,BufWritePost * call s:SetStatusLine()
     autocmd FileChangedShellPost,ColorScheme * call s:SetStatusLine()
     autocmd FileReadPre,ShellCmdPost,FileWritePost * call s:SetStatusLine()
+    " Set statusline to default when leaving window
+    autocmd WinLeave * call s:SetStatusLineDef()
 augroup END
 
 let &cpoptions = s:save_cpo
