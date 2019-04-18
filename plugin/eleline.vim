@@ -337,12 +337,8 @@ function! s:StatusLine() abort
 endfunction
 
 function! s:SetStatusLineDef() abort
-    " Set default status line for inactive windows, etc
-    if s:is_not_file()
-        setlocal statusline=
-        return
-    endif
-    " setlocal statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P
+    " Emulate the default statusline
+    setlocal statusline=%<%f\ %h%m%r%=%-14.(%l,%c%V%)\ %P
 endfunction
 
 " Hex colors (gui only)
@@ -420,7 +416,7 @@ function! s:hi_statusline() abort
 
     if &background ==# 'dark'
         call s:hi('StatusLine',     [140, s:bg+2],  [140, ''], 'none')
-        call s:hi('StatusLineNC',   [140, s:bg+2],  [140, ''], 'none')
+        " call s:hi('StatusLineNC',   [140, s:bg+2],  [140, ''], 'none')
     endif
 
     " Right side
@@ -455,7 +451,7 @@ function! s:SetStatusLine(...) abort
 endfunction
 
 if exists('*timer_start')
-    call timer_start(1000, function('s:SetStatusLine'))
+    call timer_start(100, function('s:SetStatusLine'))
 else
     call s:SetStatusLine()
 endif
@@ -469,8 +465,6 @@ augroup eleline
     autocmd WinEnter,BufWinEnter,ShellCmdPost,BufWritePost * call s:SetStatusLine()
     autocmd FileChangedShellPost,ColorScheme * call s:SetStatusLine()
     autocmd FileReadPre,ShellCmdPost,FileWritePost * call s:SetStatusLine()
-    " Set statusline to default when leaving window
-    " autocmd WinLeave * call s:SetStatusLineDef()
 augroup END
 
 let &cpoptions = s:save_cpo
