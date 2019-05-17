@@ -166,6 +166,7 @@ function! s:is_not_file() abort
         \ 'vista',
         \ 'undotree',
         \ 'startify',
+        \ 'qf',
         \ ]
     for item in exclude
         if &filetype =~? item || expand('%:t') =~ item
