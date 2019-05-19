@@ -167,6 +167,7 @@ function! s:is_not_file() abort
         \ 'undotree',
         \ 'startify',
         \ 'qf',
+        \ 'vim-plug',
         \ ]
     for item in exclude
         if &filetype =~? item || expand('%:t') =~ item
