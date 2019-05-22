@@ -6,7 +6,7 @@
 " =============================================================================
 scriptencoding utf-8
 if exists('g:loaded_eleline') || v:version < 700
-    finish
+  finish
 endif
 let g:loaded_eleline = 1
 
@@ -288,27 +288,9 @@ function! ElelineVista() abort
 endfunction
 
 function! ElelineCoc() abort
-    if s:is_tmp_file() | return '' | endif
-    if exists('g:coc_status') | return g:coc_status.' ' | endif
-    return ''
-endfunction
-
-function! ElelineMode() abort
-    " l:mode_map (0 = full size, 1 = medium abbr, 2 = short abbr)
-    let l:mode_map = {
-        \ 'n' :     ['NORMAL','NORM','N'],
-        \ 'i' :     ['INSERT','INS','I'],
-        \ 'R' :     ['REPLACE','REPL','R'],
-        \ 'v' :     ['VISUAL','VIS','V'],
-        \ 'V' :     ['V-LINE','V-LN','V-L'],
-        \ "\<C-v>": ['V-BLOCK','V-BL','V-B'],
-        \ 'c' :     ['COMMAND','CMD','C'],
-        \ 's' :     ['SELECT','SEL','S'],
-        \ 'S' :     ['S-LINE','S-LN','S-L'],
-        \ "\<C-s>": ['S-BLOCK','S-BL','S-B'],
-        \ 't':      ['TERMINAL','TERM','T'],
-        \ }
-    return printf('  %s ', l:mode_map[mode()][0])
+  if s:is_tmp_file() | return '' | endif
+  if exists('g:coc_status') && get(g:, 'coc_enabled', 0) | return g:coc_status.' ' | endif
+  return ''
 endfunction
 
 " https://github.com/liuchengxu/eleline.vim/wiki
