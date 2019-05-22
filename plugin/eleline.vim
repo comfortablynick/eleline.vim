@@ -152,7 +152,7 @@ endfunction
 
 function! s:is_tmp_file() abort
     if !empty(&buftype) | return 1 | endif
-    if index(['startify', 'gitcommit'], &filetype) > -1 | return 1 | endif
+    if index(['startify', 'gitcommit', 'netrw'], &filetype) > -1 | return 1 | endif
     if expand('%:p') =~# '^/tmp' | return 1 | endif
 endfunction
 
