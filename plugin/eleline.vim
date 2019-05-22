@@ -167,7 +167,6 @@ function! s:is_not_file() abort
         \ 'gitcommit',
         \ 'NERD_tree',
         \ 'output',
-        \ 'vista',
         \ 'undotree',
         \ 'startify',
         \ 'qf',
