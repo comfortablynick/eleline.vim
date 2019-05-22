@@ -293,6 +293,24 @@ function! ElelineCoc() abort
   return ''
 endfunction
 
+function! ElelineMode() abort
+    " l:mode_map (0 = full size, 1 = medium abbr, 2 = short abbr)
+    let l:mode_map = {
+        \ 'n' :     ['NORMAL','NORM','N'],
+        \ 'i' :     ['INSERT','INS','I'],
+        \ 'R' :     ['REPLACE','REPL','R'],
+        \ 'v' :     ['VISUAL','VIS','V'],
+        \ 'V' :     ['V-LINE','V-LN','V-L'],
+        \ "\<C-v>": ['V-BLOCK','V-BL','V-B'],
+        \ 'c' :     ['COMMAND','CMD','C'],
+        \ 's' :     ['SELECT','SEL','S'],
+        \ 'S' :     ['S-LINE','S-LN','S-L'],
+        \ "\<C-s>": ['S-BLOCK','S-BL','S-B'],
+        \ 't':      ['TERMINAL','TERM','T'],
+        \ }
+    return printf('  %s ', l:mode_map[mode()][0])
+endfunction
+
 " https://github.com/liuchengxu/eleline.vim/wiki
 function! s:StatusLine() abort
     function! s:def(fn) abort
