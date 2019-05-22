@@ -158,6 +158,10 @@ endfunction
 
 
 function! s:is_not_file() abort
+    " Make sure we are viewing a help file, not editing one
+    if &filetype ==# 'help' && &buftype ==# 'help'
+        return 1
+    endif
     " Return true if not treated as file
     let exclude = [
         \ 'gitcommit',
@@ -168,13 +172,11 @@ function! s:is_not_file() abort
         \ 'startify',
         \ 'qf',
         \ 'vim-plug',
+        \ 'netrw',
         \ ]
     for item in exclude
         if &filetype =~? item || expand('%:t') =~ item
             return 1
-            break
-        else
-            continue
         endif
     endfor
 endfunction
