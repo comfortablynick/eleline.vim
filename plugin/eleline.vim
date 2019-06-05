@@ -17,7 +17,7 @@ let s:gui = has('gui_running')
 let s:jobs = {}
 
 " Icons/symbols
-let s:font = get(g:, 'eleline_powerline_fonts', get(g:, 'airline_powerline_fonts', 0))
+let s:font = get(g:, 'eleline_powerline_fonts', get(g:, 'airline_powerline_fonts', 1))
 let s:fn_icon = s:font ? get(g:, 'eleline_function_icon', 'ƒ') : ''
 let s:ln_icon = s:font ? get(g:, 'eleline_linenr_icon', '') : ''
 let s:ro_icon = s:font ? get(g:, 'eleline_readonly_icon', '') : ''
