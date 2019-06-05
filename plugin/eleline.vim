@@ -1,7 +1,7 @@
 " =============================================================================
 " Filename: eleline.vim
-" Author: Liu-Cheng Xu
-" URL: https://github.com/liuchengxu/eleline.vim
+" Authors: Liu-Cheng Xu, Nick Murphy
+" URL: https://github.com/comfortablynick/eleline.vim
 " License: MIT License
 " =============================================================================
 scriptencoding utf-8
@@ -23,6 +23,7 @@ let s:ln_icon = s:font ? get(g:, 'eleline_linenr_icon', '') : ''
 let s:ro_icon = s:font ? get(g:, 'eleline_readonly_icon', '') : ''
 let s:lines_icon = s:font ? get(g:, 'eleline_lines_icon', '☰') : ''
 let s:modified_icon = get(g:, 'eleline_modified_icon', '[+]')
+let s:git_icon = s:font ? get(g:, 'eleline_git_icon', '') : 'Git:'
 
 function! ElelineBufnrWinnr() abort
     let l:bufnr = bufnr('%')
@@ -93,7 +94,7 @@ function! ElelineError() abort
     else
         let l:count = 0
     endif
-    return l:count == 0 ? '' : '•'.l:count.' '
+    return l:count == 0 ? '' : printf('•%d ', l:count)
 endfunction
 
 function! ElelineLineNo() abort
@@ -214,8 +215,7 @@ function! ElelineGitBranch(...) abort
         let s:jobs[job_id] = root
     elseif exists('g:loaded_fugitive')
         let l:head = fugitive#head()
-        let l:symbol = s:font ? " \ue0a0 " : ' Git:'
-        return empty(l:head) ? '' : l:symbol.l:head . ' '
+        return empty(l:head) ? '' : printf(' %s %s ', s:git_icon, l:head)
     endif
     return ''
 endfunction
@@ -225,7 +225,7 @@ function! s:out_cb(channel, message) abort
         let l:job = ch_getjob(a:channel)
         let l:job_id = matchstr(string(l:job), '\d\+')
         if !has_key(s:jobs, l:job_id) | return | endif
-        let l:branch = substitute(a:message, '*', s:font ? "  \ue0a0" : '  Git:', '')
+        let l:branch = substitute(a:message, '*', ' '.s:git_icon, '')
         call s:SetGitBranch(s:cwd, l:branch.' ')
         call remove(s:jobs, l:job_id)
     endif
@@ -236,7 +236,7 @@ function! s:on_exit(job_id, data, _event) dict abort
     if v:dying | return | endif
     let l:cur_branch = join(filter(self.stdout, 'v:val =~? "*"'))
     if !empty(l:cur_branch)
-        let l:branch = substitute(l:cur_branch, '*', s:font ? "  \ue0a0" : ' Git:', '')
+        let l:branch = substitute(l:cur_branch, '*', ' '.s:git_icon, '')
         call s:SetGitBranch(self.cwd, l:branch.' ')
     else
         let err = join(self.stderr)
@@ -272,7 +272,7 @@ function! ElelineGitStatus() abort
         let l:summary = b:gitgutter.summary
     endif
     if max(l:summary) > 0
-        return ' +'.l:summary[0].' ~'.l:summary[1].' -'.l:summary[2].' '
+        return printf(' +%d ~%d -%d ', l:summary[0], l:summary[1], l:summary[2])
     endif
     return ''
 endfunction
