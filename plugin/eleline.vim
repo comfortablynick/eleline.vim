@@ -173,6 +173,7 @@ function! s:is_not_file() abort
         \ 'qf',
         \ 'vim-plug',
         \ 'netrw',
+        \ 'minpac',
         \ ]
     for item in exclude
         if &filetype =~? item || expand('%:t') =~ item
