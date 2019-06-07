@@ -58,11 +58,11 @@ function! ElelineFsize() abort
     else
         let size = printf('%.1f', l:size/1024.0/1024.0/1024.0) . 'g'
     endif
-    return '  '.size.' '
+    return printf('  %s ', size)
 endfunction
 
 function! ElelineCurFname() abort
-    return &filetype ==# 'startify' ? '' : '  '.expand('%:p:t').' '
+    return &filetype ==# 'startify' ? '' : printf('  %s ', expand('%:p:t'))
 endfunction
 
 function! ElelineWarning() abort
@@ -78,7 +78,7 @@ function! ElelineWarning() abort
     else
         let l:count = 0
     endif
-    return l:count == 0 ? '' : '•'.l:count.' '
+    return l:count == 0 ? '' : printf('•%d ', l:count)
 endfunction
 
 function! ElelineError() abort
@@ -184,7 +184,7 @@ endfunction
 " Reference: https://github.com/chemzqm/vimrc/blob/master/statusline.vim
 function! ElelineGitBranch(...) abort
     if exists('g:coc_git_status')
-        return g:coc_git_status
+        return printf('  %s', g:coc_git_status)
     endif
     if s:is_tmp_file() | return '' | endif
     let reload = get(a:, 1, 0) == 1
@@ -341,8 +341,14 @@ function! s:StatusLine() abort
     let l:pos = s:def('ElelineLinePos')
     let l:enc = s:def('ElelineFileEnc')
     let l:ff_enc = s:def('ElelineFileFmtEnc')
-    return l:prefix.'%<'.l:fsize.l:common
-        \ .'%='.l:m_r_f.l:ff_enc.l:pos
+    return printf('%s%%<%s%s%%=%s%s%s',
+        \ l:prefix,
+        \ l:fsize,
+        \ l:common,
+        \ l:m_r_f,
+        \ l:ff_enc,
+        \ l:pos
+        \ )
 endfunction
 
 function! s:SetStatusLineDef() abort
